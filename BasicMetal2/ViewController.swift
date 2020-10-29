@@ -12,13 +12,13 @@ class ViewController: UIViewController {
     
     var pipelineState: MTLRenderPipelineState?
     var vertexBuffer: MTLBuffer?
+    var indexBuffer: MTLBuffer?
     var vertices: [Float] = [
                                 1,1,0,
                                 -1,1,0,
                                 0,0,0,
                                 -1,-1,0,
                                 1,-1,0,
-                                0,0,0,
                                 -1,0.5,0,
                                 -1,-0.5,0,
                                 -0.5,0,0,
@@ -27,6 +27,18 @@ class ViewController: UIViewController {
                                 0.5,0,0
         
                             ]
+    var indices: [UInt16] = [
+        0,1,2,
+        2,3,4,
+        5,6,7,
+        8,9,10
+    ]
+    struct Constants {
+        var animateBy: Float = 0.0
+    }
+    var constant = Constants()
+    var time: Float = 0.0
+    
     
     var device: MTLDevice!
     var commandQueue: MTLCommandQueue!
@@ -39,7 +51,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         metalView.device = MTLCreateSystemDefaultDevice()
         device = metalView.device
-        metalView.clearColor = MTLClearColor(red: 0.8, green: 0.2, blue: 0.0, alpha: 1)
+        metalView.clearColor = MTLClearColor(red: 0.6, green: 0, blue: 0, alpha: 0.5)
         commandQueue = device.makeCommandQueue()
         metalView.delegate = self
         buildModel()
@@ -48,6 +60,7 @@ class ViewController: UIViewController {
     
     private func buildModel() {
         vertexBuffer = device.makeBuffer(bytes: vertices, length: vertices.count * MemoryLayout<Float>.size, options: [])
+        indexBuffer = device.makeBuffer(bytes: indices, length: indices.count * MemoryLayout<UInt16>.size, options: [])
     }
     
     private func buildPipelineSate() {
@@ -65,7 +78,6 @@ class ViewController: UIViewController {
             print(error)
         }
     }
-    
 }
 
 extension ViewController: MTKViewDelegate {
@@ -75,18 +87,24 @@ extension ViewController: MTKViewDelegate {
     }
     
     func draw(in view: MTKView) {
+        
+        time += 0.025
+        let anim = (abs(sin(time)))
+        constant.animateBy = anim
+        
         guard let drawable = view.currentDrawable, let descriptor = view.currentRenderPassDescriptor else { return }
         let commandBuffer = commandQueue.makeCommandBuffer()
         let commandEncoder = commandBuffer?.makeRenderCommandEncoder(descriptor: descriptor)
+        
+        
         commandEncoder?.setRenderPipelineState(pipelineState!)
         commandEncoder?.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        commandEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertices.count)
+        commandEncoder?.setVertexBytes(&constant, length: MemoryLayout<Constants>.stride, index: 1)
+        commandEncoder?.drawIndexedPrimitives(type: .triangle, indexCount: indices.count, indexType: .uint16, indexBuffer: indexBuffer!, indexBufferOffset: 0)
         commandEncoder?.endEncoding()
         commandBuffer?.present(drawable)
         commandBuffer?.commit()
         
     }
-    
-    
 }
 
