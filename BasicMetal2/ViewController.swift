@@ -15,7 +15,17 @@ class ViewController: UIViewController {
     var vertices: [Float] = [
                                 1,1,0,
                                 -1,1,0,
-                                1,0,0
+                                0,0,0,
+                                -1,-1,0,
+                                1,-1,0,
+                                0,0,0,
+                                -1,0.5,0,
+                                -1,-0.5,0,
+                                -0.5,0,0,
+                                1,0.5,0,
+                                1,-0.5,0,
+                                0.5,0,0
+        
                             ]
     
     var device: MTLDevice!
@@ -23,12 +33,13 @@ class ViewController: UIViewController {
     var metalView: MTKView {
         return view as! MTKView
     }
+    //MARK: - viewDidLoad
     
     override func viewDidLoad() {
         super.viewDidLoad()
         metalView.device = MTLCreateSystemDefaultDevice()
         device = metalView.device
-        metalView.clearColor = MTLClearColor(red: 0.5, green: 0.2, blue: 0.7, alpha: 1)
+        metalView.clearColor = MTLClearColor(red: 0.8, green: 0.2, blue: 0.0, alpha: 1)
         commandQueue = device.makeCommandQueue()
         metalView.delegate = self
         buildModel()
@@ -71,8 +82,6 @@ extension ViewController: MTKViewDelegate {
         commandEncoder?.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         commandEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertices.count)
         commandEncoder?.endEncoding()
-        
-        
         commandBuffer?.present(drawable)
         commandBuffer?.commit()
         
